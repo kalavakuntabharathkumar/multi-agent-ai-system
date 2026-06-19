@@ -69,4 +69,13 @@ def create_text_from_tool(step_name: str, inputs: Dict[str, str]) -> str:
         return generate_linkedin_post(inputs.get("summary", inputs.get("text", "")))
     if step_name == "email_draft":
         return draft_email(inputs.get("summary", inputs.get("text", "")))
+    if step_name == "web_search":
+        from tools.search_tool import run_web_search
+        query = inputs.get("query", inputs.get("text", inputs.get("summary", "")))
+        return run_web_search(query)
+    if step_name == "document_qa":
+        from tools.document_tool import answer_from_document
+        document = inputs.get("text", inputs.get("summary", ""))
+        question = inputs.get("question", inputs.get("query", "Summarize the key points."))
+        return answer_from_document(document, question)
     raise ValueError(f"Unsupported tool type: {step_name}")
