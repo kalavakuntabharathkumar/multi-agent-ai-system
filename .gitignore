@@ -1,15 +1,33 @@
+# Python
 __pycache__/
-*.pyc
+*.py[cod]
 *.pyo
-*.pyd
-.Python
-env/
-venv/
-.venv/
 .env
-logs/*.log
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
 
-# Next.js
+# Node
+node_modules/
+.next/
 frontend/.next/
 frontend/node_modules/
-frontend/out/
+
+# Logs
+logs/
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# FAISS index files
+*.index
+*.faiss
