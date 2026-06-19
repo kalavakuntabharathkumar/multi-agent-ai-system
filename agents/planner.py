@@ -2,44 +2,45 @@ import json
 import os
 from typing import Any, Dict, List
 from dotenv import load_dotenv
-import openai
+from langchain_openai import ChatOpenAI
+from langchain_core.prompts import PromptTemplate
+from langchain_core.output_parsers import StrOutputParser
 from core.logger import get_logger
 
 load_dotenv()
-openai.api_key = os.getenv("OPENAI_API_KEY")
 logger = get_logger()
 
-STEP_TEMPLATE = {
-    "id": "",
-    "description": "",
-    "tool": "",
-    "dependencies": [],
-}
+_PLANNER_PROMPT = PromptTemplate(
+    input_variables=["task"],
+    template=(
+        "You are a task planner. Break a complex user request into a sequence of ordered subtasks. "
+        "Return only valid JSON. Each step must include id, description, tool, and dependencies. "
+        "Tool values should be one of: summarize, linkedin_post, email_draft. "
+        "Dependencies should reference prior step ids. "
+        "Input task: {task}"
+    ),
+)
+
+_planner_chain = None
+
+
+def _get_planner_chain():
+    global _planner_chain
+    if _planner_chain is None:
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0.3, max_tokens=400, openai_api_key=api_key)
+        _planner_chain = _PLANNER_PROMPT | llm | StrOutputParser()
+    return _planner_chain
+
 
 class PlannerAgent:
     def __init__(self) -> None:
         pass
 
-    def _build_prompt(self, task: str) -> str:
-        return (
-            "You are a task planner. Break a complex user request into a sequence of ordered subtasks. "
-            "Return only valid JSON. Each step must include id, description, tool, and dependencies. "
-            "Tool values should be one of: summarize, linkedin_post, email_draft. "
-            "Dependencies should reference prior step ids. "
-            f"Input task: {task}"
-        )
-
     def create_plan(self, user_task: str) -> Dict[str, Any]:
         logger.info("PlannerAgent creating plan")
-        prompt = self._build_prompt(user_task)
-
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.3,
-            max_tokens=400,
-        )
-        raw_text = response.choices[0].message.content.strip()
+        chain = _get_planner_chain()
+        raw_text = chain.invoke({"task": user_task}).strip()
 
         try:
             data = json.loads(raw_text)
@@ -47,7 +48,7 @@ class PlannerAgent:
                 self._validate_plan(data["steps"])
                 logger.info("PlannerAgent generated structured plan")
                 return data
-        except json.JSONDecodeError:
+        except (json.JSONDecodeError, ValueError):
             logger.warning("Planner returned invalid JSON, using fallback planner")
 
         return self._fallback_plan(user_task)
