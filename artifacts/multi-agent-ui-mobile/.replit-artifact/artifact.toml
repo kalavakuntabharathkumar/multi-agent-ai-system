@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/multi-agent-ui-mobile/"
+title = "Multi-Agent AI Mobile"
+version = "1.0.0"
+id = "artifacts/multi-agent-ui-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/multi-agent-ui-mobile/" ]
+localPort = 18122
+
+[services.development]
+run = "pnpm --filter @workspace/multi-agent-ui-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/multi-agent-ui-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/multi-agent-ui-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "18122"
+BASE_PATH = "/multi-agent-ui-mobile/"
