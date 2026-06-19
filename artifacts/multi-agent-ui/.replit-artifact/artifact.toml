@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Multi-Agent AI Task Automation"
+version = "1.0.0"
+id = "artifacts/multi-agent-ui"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 23618
+
+[services.development]
+run = "pnpm --filter @workspace/multi-agent-ui run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/multi-agent-ui", "run", "build" ]
+publicDir = "artifacts/multi-agent-ui/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "23618"
+BASE_PATH = "/"

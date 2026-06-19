@@ -3,13 +3,15 @@ info:
   # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: Multi-Agent AI Task Automation API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: tasks
+    description: Task automation operations
 paths:
   /healthz:
     get:
@@ -24,6 +26,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+  /run-task:
+    post:
+      operationId: runTask
+      tags: [tasks]
+      summary: Run a task
+      description: Run a task and receive the full result in a single JSON response
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/TaskInput"
+      responses:
+        "200":
+          description: Task completed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TaskResult"
+        "400":
+          description: Invalid request
 components:
   schemas:
     HealthStatus:
@@ -33,4 +56,74 @@ components:
           type: string
       required:
         - status
-
+    TaskInput:
+      type: object
+      properties:
+        task:
+          type: string
+          minLength: 1
+      required:
+        - task
+    PlanStep:
+      type: object
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        tool:
+          type: string
+        dependencies:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - description
+        - tool
+        - dependencies
+    StepResult:
+      type: object
+      properties:
+        id:
+          type: string
+        tool:
+          type: string
+        status:
+          type: string
+        result:
+          type: string
+        attempt:
+          type: integer
+        elapsed_seconds:
+          type: number
+        confidence:
+          type: number
+      required:
+        - id
+        - tool
+        - status
+        - result
+        - attempt
+        - elapsed_seconds
+        - confidence
+    TaskResult:
+      type: object
+      properties:
+        task:
+          type: string
+        plan:
+          type: object
+          properties:
+            steps:
+              type: array
+              items:
+                $ref: "#/components/schemas/PlanStep"
+        trace:
+          type: array
+          items:
+            $ref: "#/components/schemas/StepResult"
+      required:
+        - task
+        - plan
+        - trace

@@ -6,6 +6,12 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface HealthStatus {
+export interface StepResult {
+  id: string;
+  tool: string;
   status: string;
+  result: string;
+  attempt: number;
+  elapsed_seconds: number;
+  confidence: number;
 }

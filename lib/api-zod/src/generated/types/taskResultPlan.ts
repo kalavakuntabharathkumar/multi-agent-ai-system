@@ -5,7 +5,8 @@
  * Multi-Agent AI Task Automation API
  * OpenAPI spec version: 0.1.0
  */
+import type { PlanStep } from './planStep';
 
-export interface HealthStatus {
-  status: string;
-}
+export type TaskResultPlan = {
+  steps?: PlanStep[];
+};
