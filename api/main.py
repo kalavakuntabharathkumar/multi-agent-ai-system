@@ -9,10 +9,11 @@ from fastapi import FastAPI, HTTPException, BackgroundTasks, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
-from typing import Any, Dict, Generator, Optional
+from typing import Any, Dict, Generator
+
 from sqlalchemy.orm import Session
 
-from core.executor import ExecutionEngine
+from core.executor import execution_graph, _make_initial_state, _memory
 from api.database import Base, engine, get_db
 from api.models import Job
 from api.job_worker import process_job
@@ -40,9 +41,13 @@ class TaskRequest(BaseModel):
 async def run_task(request: TaskRequest) -> Dict[str, Any]:
     if not request.task.strip():
         raise HTTPException(status_code=400, detail="task must not be empty")
-    execution_engine = ExecutionEngine()
-    result = execution_engine.run(request.task)
-    return result
+    final_state = execution_graph.invoke(_make_initial_state(request.task))
+    return {
+        "task": request.task,
+        "plan": final_state["plan"],
+        "trace": final_state["trace"],
+        "final_output": _memory.get_context(),
+    }
 
 
 @app.get("/api/run-task/stream")
@@ -72,11 +77,16 @@ async def stream_task(
         }
 
     def event_generator() -> Generator[str, None, None]:
-        execution_engine = ExecutionEngine()
-        for item in execution_engine.run_stream(task):
-            event_type = item.get("event", "message")
-            payload = json.dumps(item.get("data", {}))
-            yield f"event: {event_type}\ndata: {payload}\n\n"
+        for chunk in execution_graph.stream(_make_initial_state(task)):
+            for node_name, update in chunk.items():
+                if node_name == "planner":
+                    payload = json.dumps(update.get("plan", {}))
+                    yield f"event: plan\ndata: {payload}\n\n"
+                elif node_name == "worker":
+                    trace = update.get("trace", [])
+                    if trace:
+                        yield f"event: step\ndata: {json.dumps(trace[-1])}\n\n"
+        yield f"event: done\ndata: {json.dumps(_memory.get_context())}\n\n"
 
     return StreamingResponse(
         event_generator(),

@@ -15,7 +15,8 @@ A real-time multi-agent AI task automation system. Describe a complex task and w
 - pnpm workspaces, Node.js 24, TypeScript 5.9
 - Frontend: React + Vite (artifacts/multi-agent-ui)
 - API proxy: Express 5 (artifacts/api-server) — proxies `/api/run-task` to Python FastAPI
-- Python backend: FastAPI + LangChain + OpenAI (original, runs separately)
+- Python backend: FastAPI + LangGraph + LangChain + OpenAI
+- Orchestration: LangGraph `StateGraph` with conditional edges for retries and dependency-aware step routing
 - Validation: Zod (`zod/v4`), `drizzle-zod`
 - API codegen: Orval (from OpenAPI spec)
 
