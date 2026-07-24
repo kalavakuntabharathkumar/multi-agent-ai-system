@@ -1,17 +1,19 @@
+// Dialog UI primitives built on Radix Dialog: accessible modal with overlay and close button.
+// Exports Dialog, DialogTrigger, DialogContent, DialogHeader, DialogFooter, DialogTitle, DialogDescription.
+
 import * as React from "react"
 import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Re-export primitive components that need no additional styling
 const Dialog = DialogPrimitive.Root
-
 const DialogTrigger = DialogPrimitive.Trigger
-
 const DialogPortal = DialogPrimitive.Portal
-
 const DialogClose = DialogPrimitive.Close
 
+// DialogOverlay: semi-transparent black backdrop with fade animation
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
@@ -27,6 +29,7 @@ const DialogOverlay = React.forwardRef<
 ))
 DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 
+// DialogContent: centered modal panel rendered inside a portal, with a built-in close button
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
@@ -42,6 +45,7 @@ const DialogContent = React.forwardRef<
       {...props}
     >
       {children}
+      {/* Absolute-positioned X button in the top-right corner */}
       <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
@@ -51,6 +55,7 @@ const DialogContent = React.forwardRef<
 ))
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
+// DialogHeader: stacked column for title + description, centered on mobile
 const DialogHeader = ({
   className,
   ...props
@@ -65,6 +70,7 @@ const DialogHeader = ({
 )
 DialogHeader.displayName = "DialogHeader"
 
+// DialogFooter: action button row, stacked on mobile and right-aligned on desktop
 const DialogFooter = ({
   className,
   ...props
@@ -79,6 +85,7 @@ const DialogFooter = ({
 )
 DialogFooter.displayName = "DialogFooter"
 
+// DialogTitle: bold heading displayed at the top of the dialog content
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
@@ -94,6 +101,7 @@ const DialogTitle = React.forwardRef<
 ))
 DialogTitle.displayName = DialogPrimitive.Title.displayName
 
+// DialogDescription: smaller muted text below the dialog title
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>

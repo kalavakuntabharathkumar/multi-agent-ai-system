@@ -1,3 +1,5 @@
+// 404 page: shown when the user navigates to a route that doesn't exist.
+
 import { Card, CardContent } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
 

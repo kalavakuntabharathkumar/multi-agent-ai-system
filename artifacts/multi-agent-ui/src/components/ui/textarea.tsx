@@ -1,7 +1,10 @@
+// Textarea UI component: multi-line text input with consistent border and focus ring styles.
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// forwardRef allows parent components to access the DOM element directly (e.g. for focus)
 const Textarea = React.forwardRef<
   HTMLTextAreaElement,
   React.ComponentProps<"textarea">

@@ -1,16 +1,19 @@
 "use client"
 
+// Tooltip UI component: hover/focus-triggered floating label built on Radix Tooltip.
+// Exports TooltipProvider (wrap at app root), Tooltip, TooltipTrigger, and TooltipContent.
+
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
 
 import { cn } from "@/lib/utils"
 
+// Re-export primitives that need no additional styling
 const TooltipProvider = TooltipPrimitive.Provider
-
 const Tooltip = TooltipPrimitive.Root
-
 const TooltipTrigger = TooltipPrimitive.Trigger
 
+// TooltipContent: the floating label rendered in a portal with slide/fade animations
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
@@ -18,7 +21,7 @@ const TooltipContent = React.forwardRef<
   <TooltipPrimitive.Portal>
     <TooltipPrimitive.Content
       ref={ref}
-      sideOffset={sideOffset}
+      sideOffset={sideOffset}  // gap (px) between the trigger and the tooltip
       className={cn(
         "z-50 overflow-hidden rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-tooltip-content-transform-origin]",
         className

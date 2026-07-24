@@ -1,7 +1,11 @@
+// Card UI primitives: Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter.
+// Used throughout the app as a generic content container with consistent border/shadow styles.
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// Card: the outer container with rounded border and card background token
 const Card = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -17,6 +21,7 @@ const Card = React.forwardRef<
 ))
 Card.displayName = "Card"
 
+// CardHeader: stacked layout for title + description, with consistent top padding
 const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -29,6 +34,7 @@ const CardHeader = React.forwardRef<
 ))
 CardHeader.displayName = "CardHeader"
 
+// CardTitle: large, semi-bold heading inside a card header
 const CardTitle = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -41,6 +47,7 @@ const CardTitle = React.forwardRef<
 ))
 CardTitle.displayName = "CardTitle"
 
+// CardDescription: smaller muted text below the card title
 const CardDescription = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -53,6 +60,7 @@ const CardDescription = React.forwardRef<
 ))
 CardDescription.displayName = "CardDescription"
 
+// CardContent: main body area; pt-0 ensures no gap between header and content
 const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -61,6 +69,7 @@ const CardContent = React.forwardRef<
 ))
 CardContent.displayName = "CardContent"
 
+// CardFooter: flex row for action buttons, aligned to the right by default
 const CardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>

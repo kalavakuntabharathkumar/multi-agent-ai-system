@@ -8,6 +8,9 @@ Or run directly:
     python tests/test_document_tool.py
 """
 
+# Tests for document_tool.py: verifies HuggingFace embeddings are used and
+# that the QA chain returns a non-empty answer string.
+
 from unittest.mock import patch, MagicMock
 from tools.document_tool import answer_from_document
 
@@ -37,17 +40,18 @@ def test_answer_from_document_uses_hf_embeddings():
 
         with patch("tools.document_tool.HuggingFaceEmbeddings") as mock_emb_cls:
             from langchain_huggingface import HuggingFaceEmbeddings as RealHFE
-            mock_emb_cls.side_effect = RealHFE
+            mock_emb_cls.side_effect = RealHFE  # allow the real HF model to load
 
             with patch("tools.document_tool.FAISS") as mock_faiss:
                 mock_vs = MagicMock()
                 mock_vs.as_retriever.return_value = MagicMock()
-                mock_faiss.from_documents.return_value = mock_vs
+                mock_faiss.from_documents.return_value = mock_vs  # stub the FAISS index
 
                 with patch("tools.document_tool.StrOutputParser"):
                     with patch("tools.document_tool.RunnablePassthrough"):
                         result = answer_from_document(SAMPLE_DOCUMENT, SAMPLE_QUESTION)
 
+            # Verify that HuggingFaceEmbeddings was called (not OpenAI embeddings)
             assert mock_emb_cls.called, "HuggingFaceEmbeddings was not called"
             model_arg = mock_emb_cls.call_args[1].get(
                 "model_name", mock_emb_cls.call_args[0][0] if mock_emb_cls.call_args[0] else None

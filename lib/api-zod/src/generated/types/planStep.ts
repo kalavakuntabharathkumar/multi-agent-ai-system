@@ -6,9 +6,10 @@
  * OpenAPI spec version: 0.1.0
  */
 
+// TypeScript interface for a single step inside the planner's execution plan
 export interface PlanStep {
-  id: string;
-  description: string;
-  tool: string;
-  dependencies: string[];
+  id: string;              // unique identifier for this step (e.g. "step1")
+  description: string;     // human-readable description of what this step does
+  tool: string;            // which tool will execute this step (e.g. "summarize")
+  dependencies: string[];  // list of step ids that must complete before this step runs
 }

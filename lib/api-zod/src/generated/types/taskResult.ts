@@ -5,11 +5,13 @@
  * Multi-Agent AI Task Automation API
  * OpenAPI spec version: 0.1.0
  */
+
+// TypeScript interface for the POST /run-task response body
 import type { StepResult } from './stepResult';
 import type { TaskResultPlan } from './taskResultPlan';
 
 export interface TaskResult {
-  task: string;
-  plan: TaskResultPlan;
-  trace: StepResult[];
+  task: string;           // the original task string echoed back in the response
+  plan: TaskResultPlan;   // the planner's structured step list
+  trace: StepResult[];    // ordered list of step execution results
 }

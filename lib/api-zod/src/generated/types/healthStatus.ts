@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+// TypeScript interface for the GET /healthz response body
 export interface HealthStatus {
-  status: string;
+  status: string;  // "ok" when the server is healthy
 }

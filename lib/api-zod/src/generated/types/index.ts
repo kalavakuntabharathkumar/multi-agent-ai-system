@@ -6,6 +6,7 @@
  * OpenAPI spec version: 0.1.0
  */
 
+// Barrel file: re-exports all generated TypeScript interfaces from their individual files
 export * from './healthStatus';
 export * from './planStep';
 export * from './stepResult';

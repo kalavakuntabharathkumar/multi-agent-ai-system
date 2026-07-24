@@ -1,11 +1,14 @@
+// Vite configuration for the React frontend.
+// Reads PORT and BASE_PATH from the environment (both required at dev/build time).
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
-import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 
 const rawPort = process.env.PORT;
 
+// Fail fast if PORT is missing — vite needs it to bind the dev server
 if (!rawPort) {
   throw new Error(
     "PORT environment variable is required but was not provided.",
@@ -20,6 +23,7 @@ if (Number.isNaN(port) || port <= 0) {
 
 const basePath = process.env.BASE_PATH;
 
+// Fail fast if BASE_PATH is missing — needed for correct asset URL resolution
 if (!basePath) {
   throw new Error(
     "BASE_PATH environment variable is required but was not provided.",
@@ -27,43 +31,29 @@ if (!basePath) {
 }
 
 export default defineConfig({
-  base: basePath,
+  base: basePath,  // prefix all asset URLs with the configured base path
   plugins: [
-    react(),
-    tailwindcss(),
-    runtimeErrorOverlay(),
-    ...(process.env.NODE_ENV !== "production" &&
-    process.env.REPL_ID !== undefined
-      ? [
-          await import("@replit/vite-plugin-cartographer").then((m) =>
-            m.cartographer({
-              root: path.resolve(import.meta.dirname, ".."),
-            }),
-          ),
-          await import("@replit/vite-plugin-dev-banner").then((m) =>
-            m.devBanner(),
-          ),
-        ]
-      : []),
+    react(),         // Babel-based React transform (JSX, Fast Refresh)
+    tailwindcss(),   // Tailwind CSS v4 Vite plugin (no PostCSS config needed)
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
+      "@": path.resolve(import.meta.dirname, "src"),  // @ → src/ shortcut used throughout the app
     },
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom"],  // prevent duplicate React instances in the bundle
   },
   root: path.resolve(import.meta.dirname),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
-    emptyOutDir: true,
+    emptyOutDir: true,  // clean the output directory before each build
   },
   server: {
     port,
-    strictPort: true,
-    host: "0.0.0.0",
-    allowedHosts: true,
+    strictPort: true,     // fail if the port is already in use instead of picking another
+    host: "0.0.0.0",      // bind to all interfaces so the dev server is accessible in containerized environments
+    allowedHosts: true,   // accept requests from any hostname (required when behind a proxy)
     fs: {
-      strict: true,
+      strict: true,       // block requests to files outside the project root
     },
   },
   preview: {

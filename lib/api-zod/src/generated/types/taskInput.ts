@@ -6,7 +6,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+// TypeScript interface for the POST /run-task request body
 export interface TaskInput {
   /** @minLength 1 */
-  task: string;
+  task: string;  // the plain-text task description — must not be empty
 }

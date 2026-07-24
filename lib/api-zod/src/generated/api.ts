@@ -5,6 +5,9 @@
  * Multi-Agent AI Task Automation API
  * OpenAPI spec version: 0.1.0
  */
+// Auto-generated Zod schemas derived from openapi.yaml.
+// HealthCheckResponse, RunTaskBody, and RunTaskResponse mirror the OpenAPI spec shapes.
+
 import * as zod from 'zod';
 
 
@@ -12,6 +15,7 @@ import * as zod from 'zod';
  * Returns server health status
  * @summary Health check
  */
+// Schema for the GET /healthz response — validates that status is a string
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
@@ -24,10 +28,12 @@ export const HealthCheckResponse = zod.object({
 
 
 
+// Schema for the POST /run-task request body — task must be a non-empty string
 export const RunTaskBody = zod.object({
   "task": zod.string().min(1)
 })
 
+// Schema for the POST /run-task response — includes the plan, per-step trace, and full task string
 export const RunTaskResponse = zod.object({
   "task": zod.string(),
   "plan": zod.object({
@@ -48,5 +54,3 @@ export const RunTaskResponse = zod.object({
   "confidence": zod.number()
 }))
 })
-
-

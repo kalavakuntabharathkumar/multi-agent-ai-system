@@ -40,12 +40,3 @@ testem.log
 # System Files
 .DS_Store
 Thumbs.db
-
-# platform config
-.replit
-.replitignore
-replit.md
-.cache/
-.local/
-.agents/
-.replit-artifact/

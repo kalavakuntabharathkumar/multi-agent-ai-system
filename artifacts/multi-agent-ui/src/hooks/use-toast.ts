@@ -1,3 +1,6 @@
+// Toast notification system: a lightweight Redux-style store (no external state library).
+// Exposes toast() to trigger a notification and useToast() to subscribe to the list.
+
 import * as React from "react"
 
 import type {
@@ -5,8 +8,8 @@ import type {
   ToastProps,
 } from "@/components/ui/toast"
 
-const TOAST_LIMIT = 1
-const TOAST_REMOVE_DELAY = 1000000
+const TOAST_LIMIT = 1               // maximum number of toasts visible at once
+const TOAST_REMOVE_DELAY = 1000000  // delay (ms) before a dismissed toast is purged from state
 
 type ToasterToast = ToastProps & {
   id: string
@@ -15,6 +18,7 @@ type ToasterToast = ToastProps & {
   action?: ToastActionElement
 }
 
+// Action type constants for the reducer
 const actionTypes = {
   ADD_TOAST: "ADD_TOAST",
   UPDATE_TOAST: "UPDATE_TOAST",
@@ -25,6 +29,7 @@ const actionTypes = {
 let count = 0
 
 function genId() {
+  // Increment a module-level counter and wrap at MAX_SAFE_INTEGER to generate unique ids
   count = (count + 1) % Number.MAX_SAFE_INTEGER
   return count.toString()
 }
@@ -53,13 +58,15 @@ interface State {
   toasts: ToasterToast[]
 }
 
+// Map of toastId → setTimeout handle for scheduled removals
 const toastTimeouts = new Map<string, ReturnType<typeof setTimeout>>()
 
 const addToRemoveQueue = (toastId: string) => {
   if (toastTimeouts.has(toastId)) {
-    return
+    return  // already scheduled for removal — don't double-schedule
   }
 
+  // Schedule a REMOVE_TOAST dispatch after the configured delay
   const timeout = setTimeout(() => {
     toastTimeouts.delete(toastId)
     dispatch({
@@ -74,12 +81,14 @@ const addToRemoveQueue = (toastId: string) => {
 export const reducer = (state: State, action: Action): State => {
   switch (action.type) {
     case "ADD_TOAST":
+      // Prepend the new toast and enforce the TOAST_LIMIT by slicing
       return {
         ...state,
         toasts: [action.toast, ...state.toasts].slice(0, TOAST_LIMIT),
       }
 
     case "UPDATE_TOAST":
+      // Merge the partial update into the matching toast by id
       return {
         ...state,
         toasts: state.toasts.map((t) =>
@@ -93,13 +102,14 @@ export const reducer = (state: State, action: Action): State => {
       // ! Side effects ! - This could be extracted into a dismissToast() action,
       // but I'll keep it here for simplicity
       if (toastId) {
-        addToRemoveQueue(toastId)
+        addToRemoveQueue(toastId)  // schedule removal for a specific toast
       } else {
         state.toasts.forEach((toast) => {
-          addToRemoveQueue(toast.id)
+          addToRemoveQueue(toast.id)  // schedule removal for all toasts
         })
       }
 
+      // Set open: false immediately so the exit animation plays before removal
       return {
         ...state,
         toasts: state.toasts.map((t) =>
@@ -116,31 +126,32 @@ export const reducer = (state: State, action: Action): State => {
       if (action.toastId === undefined) {
         return {
           ...state,
-          toasts: [],
+          toasts: [],  // remove all toasts if no id is specified
         }
       }
       return {
         ...state,
-        toasts: state.toasts.filter((t) => t.id !== action.toastId),
+        toasts: state.toasts.filter((t) => t.id !== action.toastId),  // remove the specific toast
       }
   }
 }
 
+// Module-level listener list and state — acts as a simple pub/sub store
 const listeners: Array<(state: State) => void> = []
 
 let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
-  memoryState = reducer(memoryState, action)
+  memoryState = reducer(memoryState, action)  // update the in-memory state
   listeners.forEach((listener) => {
-    listener(memoryState)
+    listener(memoryState)  // notify all subscribed components
   })
 }
 
 type Toast = Omit<ToasterToast, "id">
 
 function toast({ ...props }: Toast) {
-  const id = genId()
+  const id = genId()  // generate a unique id for this toast
 
   const update = (props: ToasterToast) =>
     dispatch({
@@ -156,7 +167,7 @@ function toast({ ...props }: Toast) {
       id,
       open: true,
       onOpenChange: (open) => {
-        if (!open) dismiss()
+        if (!open) dismiss()  // auto-dismiss when the toast closes via animation
       },
     },
   })
@@ -172,11 +183,11 @@ function useToast() {
   const [state, setState] = React.useState<State>(memoryState)
 
   React.useEffect(() => {
-    listeners.push(setState)
+    listeners.push(setState)  // subscribe this component to store updates
     return () => {
       const index = listeners.indexOf(setState)
       if (index > -1) {
-        listeners.splice(index, 1)
+        listeners.splice(index, 1)  // unsubscribe on unmount
       }
     }
   }, [state])

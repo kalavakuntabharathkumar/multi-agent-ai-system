@@ -1,5 +1,8 @@
 "use client"
 
+// Sheet UI component: a slide-in panel (drawer) built on Radix Dialog.
+// Supports four sides (top, bottom, left, right) via the `side` variant.
+
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
 import { cva, type VariantProps } from "class-variance-authority"
@@ -7,14 +10,13 @@ import { X } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
+// Re-export Radix primitives that need no additional styling
 const Sheet = SheetPrimitive.Root
-
 const SheetTrigger = SheetPrimitive.Trigger
-
 const SheetClose = SheetPrimitive.Close
-
 const SheetPortal = SheetPrimitive.Portal
 
+// SheetOverlay: full-screen semi-transparent backdrop with fade animation
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
@@ -30,6 +32,7 @@ const SheetOverlay = React.forwardRef<
 ))
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
+// Slide-in variants for each edge of the screen
 const sheetVariants = cva(
   "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=closed]:duration-300 data-[state=open]:duration-500 data-[state=open]:animate-in data-[state=closed]:animate-out",
   {
@@ -44,7 +47,7 @@ const sheetVariants = cva(
       },
     },
     defaultVariants: {
-      side: "right",
+      side: "right",  // drawer slides in from the right by default
     },
   }
 )
@@ -53,6 +56,7 @@ interface SheetContentProps
   extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
     VariantProps<typeof sheetVariants> {}
 
+// SheetContent: the slide-in panel itself, rendered inside a portal with a close button
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
@@ -61,9 +65,10 @@ const SheetContent = React.forwardRef<
     <SheetOverlay />
     <SheetPrimitive.Content
       ref={ref}
-      className={cn(sheetVariants({ side }), className)}
+      className={cn(sheetVariants({ side }), className)}  // apply the correct slide direction
       {...props}
     >
+      {/* Absolute close button in the top-right corner */}
       <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
         <X className="h-4 w-4" />
         <span className="sr-only">Close</span>
@@ -74,6 +79,7 @@ const SheetContent = React.forwardRef<
 ))
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
+// SheetHeader: stacked column for title + description
 const SheetHeader = ({
   className,
   ...props
@@ -88,6 +94,7 @@ const SheetHeader = ({
 )
 SheetHeader.displayName = "SheetHeader"
 
+// SheetFooter: action button row, stacked on mobile and right-aligned on desktop
 const SheetFooter = ({
   className,
   ...props
@@ -102,6 +109,7 @@ const SheetFooter = ({
 )
 SheetFooter.displayName = "SheetFooter"
 
+// SheetTitle: bold heading at the top of the sheet
 const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
@@ -114,6 +122,7 @@ const SheetTitle = React.forwardRef<
 ))
 SheetTitle.displayName = SheetPrimitive.Title.displayName
 
+// SheetDescription: smaller muted text below the sheet title
 const SheetDescription = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
   React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>

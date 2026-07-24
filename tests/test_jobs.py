@@ -5,6 +5,9 @@ Run with:
     pytest tests/test_jobs.py -v
 """
 
+# Covers: job creation on heavy input, status endpoint, size-threshold routing,
+# and LangGraph graph behavior (retries, dependency ordering, parallelism).
+
 import uuid
 import pytest
 from unittest.mock import patch, MagicMock, call
@@ -16,12 +19,14 @@ from api.database import Base, get_db
 from api.models import Job
 from api.main import app, WORD_COUNT_THRESHOLD
 
+# Use an in-memory SQLite database so tests don't touch the real PostgreSQL instance
 SQLITE_URL = "sqlite:///./test_jobs.db"
 test_engine = create_engine(SQLITE_URL, connect_args={"check_same_thread": False})
 TestingSessionLocal = sessionmaker(bind=test_engine, autocommit=False, autoflush=False)
 
 
 def override_get_db():
+    """FastAPI dependency override that uses the SQLite test session instead of PostgreSQL."""
     db = TestingSessionLocal()
     try:
         yield db
@@ -31,8 +36,9 @@ def override_get_db():
 
 @pytest.fixture(autouse=True)
 def setup_db():
+    """Create tables before each test and drop them after, ensuring a clean slate."""
     Base.metadata.create_all(bind=test_engine)
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_db] = override_get_db  # replace real DB with test DB
     yield
     Base.metadata.drop_all(bind=test_engine)
     app.dependency_overrides.clear()
@@ -42,10 +48,12 @@ client = TestClient(app)
 
 
 def make_heavy_input(word_count: int = WORD_COUNT_THRESHOLD + 10) -> str:
+    """Build a task string that exceeds the word-count threshold to trigger job queuing."""
     return " ".join(["word"] * word_count)
 
 
 def make_light_input(word_count: int = 5) -> str:
+    """Build a short task string that stays below the threshold to trigger inline streaming."""
     return " ".join(["word"] * word_count)
 
 
@@ -63,7 +71,7 @@ def _stream_chunks_for(plan=None, steps=None):
         "completed_step_ids": [],
         "final_output": {},
     }
-    return iter([{"planner": planner_update}])
+    return iter([{"planner": planner_update}])  # single planner chunk, no worker chunks
 
 
 # ── Job creation tests ────────────────────────────────────────────────────────
@@ -73,12 +81,12 @@ class TestJobCreation:
     def test_heavy_input_creates_queued_job(self):
         heavy_task = make_heavy_input()
 
-        with patch("api.main.process_job"):
+        with patch("api.main.process_job"):  # don't actually run the background job
             response = client.get(f"/api/run-task/stream?task={heavy_task}")
 
         assert response.status_code == 200
         body = response.json()
-        assert body["queued"] is True
+        assert body["queued"] is True  # response must signal that the task was queued
         assert "job_id" in body
 
         db = TestingSessionLocal()
@@ -86,7 +94,7 @@ class TestJobCreation:
         db.close()
 
         assert job is not None
-        assert job.status == "queued"
+        assert job.status == "queued"   # initial status must be "queued"
         assert job.input_text == heavy_task
 
 
@@ -107,7 +115,7 @@ class TestStatusCheckEndpoint:
         body = response.json()
         assert body["job_id"] == job_id
         assert body["status"] == "done"
-        assert body["result"] == {"task": "some task"}
+        assert body["result"] == {"task": "some task"}  # result should be deserialized JSON
 
     def test_get_nonexistent_job_returns_404(self):
         response = client.get(f"/api/jobs/{uuid.uuid4()}")
@@ -115,7 +123,7 @@ class TestStatusCheckEndpoint:
 
     def test_get_job_invalid_uuid_returns_400(self):
         response = client.get("/api/jobs/not-a-uuid")
-        assert response.status_code == 400
+        assert response.status_code == 400  # malformed UUID should be rejected
 
 
 # ── Size threshold routing tests ──────────────────────────────────────────────
@@ -133,30 +141,30 @@ class TestSizeThresholdRouting:
             response = client.get(f"/api/run-task/stream?task={light_task}")
 
         assert response.status_code == 200
-        assert "text/event-stream" in response.headers["content-type"]
+        assert "text/event-stream" in response.headers["content-type"]  # must be SSE
 
         db = TestingSessionLocal()
         job_count = db.query(Job).count()
         db.close()
-        assert job_count == 0
+        assert job_count == 0  # no job row should be created for light input
 
     def test_heavy_input_creates_job_light_does_not(self):
         heavy_task = make_heavy_input()
         light_task = make_light_input()
 
         with patch("api.main.process_job"):
-            client.get(f"/api/run-task/stream?task={heavy_task}")
+            client.get(f"/api/run-task/stream?task={heavy_task}")  # creates 1 job
 
         with patch("api.main.execution_graph") as mock_graph, \
              patch("api.main._memory") as mock_mem:
             mock_graph.stream.return_value = _stream_chunks_for()
             mock_mem.get_context.return_value = {}
-            client.get(f"/api/run-task/stream?task={light_task}")
+            client.get(f"/api/run-task/stream?task={light_task}")  # should NOT create a job
 
         db = TestingSessionLocal()
         job_count = db.query(Job).count()
         db.close()
-        assert job_count == 1
+        assert job_count == 1  # only the heavy task should have created a job row
 
 
 # ── LangGraph orchestration tests ─────────────────────────────────────────────
@@ -223,7 +231,7 @@ class TestLangGraphOrchestration:
             from core.executor import execution_graph, _make_initial_state
             result = execution_graph.invoke(_make_initial_state("failing task"))
 
-        assert mock_worker.execute_step.call_count == 3
+        assert mock_worker.execute_step.call_count == 3  # must retry exactly 3 times
         assert len(result["trace"]) == 3
         assert all(t["status"] == "failed" for t in result["trace"])
         assert [t["attempt"] for t in result["trace"]] == [1, 2, 3]
@@ -238,8 +246,8 @@ class TestLangGraphOrchestration:
                 "steps": [self._make_step("s1")]
             }
             mock_worker.execute_step.side_effect = [
-                self._failure_result("s1"),
-                self._success_result("s1"),
+                self._failure_result("s1"),  # first attempt fails
+                self._success_result("s1"),  # second attempt succeeds
             ]
 
             from core.executor import execution_graph, _make_initial_state
@@ -254,7 +262,7 @@ class TestLangGraphOrchestration:
         execution_order = []
 
         def fake_execute(step):
-            execution_order.append(step["id"])
+            execution_order.append(step["id"])  # record the order steps are actually run
             return self._success_result(step["id"])
 
         with patch("core.executor._planner") as mock_planner, \
@@ -273,7 +281,7 @@ class TestLangGraphOrchestration:
             from core.executor import execution_graph, _make_initial_state
             result = execution_graph.invoke(_make_initial_state("chained task"))
 
-        assert execution_order == ["s1", "s2", "s3"]
+        assert execution_order == ["s1", "s2", "s3"]  # must run in dependency order
         assert len(result["trace"]) == 3
         assert all(t["status"] == "success" for t in result["trace"])
 

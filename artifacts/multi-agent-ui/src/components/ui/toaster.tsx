@@ -1,3 +1,6 @@
+// Toaster: renders all active toasts from the useToast store into the ToastViewport.
+// Placed once at the app root (in App.tsx) so toasts are always accessible.
+
 import { useToast } from "@/hooks/use-toast"
 import {
   Toast,
@@ -9,7 +12,7 @@ import {
 } from "@/components/ui/toast"
 
 export function Toaster() {
-  const { toasts } = useToast()
+  const { toasts } = useToast()  // subscribe to the global toast list
 
   return (
     <ToastProvider>
@@ -22,12 +25,12 @@ export function Toaster() {
                 <ToastDescription>{description}</ToastDescription>
               )}
             </div>
-            {action}
-            <ToastClose />
+            {action}          {/* optional action button (e.g. "Undo") */}
+            <ToastClose />    {/* X dismiss button */}
           </Toast>
         )
       })}
-      <ToastViewport />
+      <ToastViewport />  {/* fixed container that positions toasts on screen */}
     </ToastProvider>
   )
 }

@@ -5,8 +5,10 @@
  * Multi-Agent AI Task Automation API
  * OpenAPI spec version: 0.1.0
  */
+
+// TypeScript interface for the plan object nested inside TaskResult
 import type { PlanStep } from './planStep';
 
 export type TaskResultPlan = {
-  steps?: PlanStep[];
+  steps?: PlanStep[];  // optional — may be absent if the planner produced no steps
 };

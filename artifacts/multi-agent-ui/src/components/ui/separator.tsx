@@ -1,3 +1,6 @@
+// Separator UI component: renders a horizontal or vertical dividing line.
+// Built on Radix Separator for correct ARIA semantics (decorative by default).
+
 import * as React from "react"
 import * as SeparatorPrimitive from "@radix-ui/react-separator"
 
@@ -13,10 +16,11 @@ const Separator = React.forwardRef<
   ) => (
     <SeparatorPrimitive.Root
       ref={ref}
-      decorative={decorative}
-      orientation={orientation}
+      decorative={decorative}     // decorative=true hides it from screen readers
+      orientation={orientation}   // "horizontal" or "vertical"
       className={cn(
         "shrink-0 bg-border",
+        // Apply 1px thickness in the correct dimension based on orientation
         orientation === "horizontal" ? "h-[1px] w-full" : "h-full w-[1px]",
         className
       )}

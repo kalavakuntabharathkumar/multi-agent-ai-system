@@ -1,7 +1,10 @@
+// Input UI component: styled text input with consistent border, focus ring, and disabled state.
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
+// forwardRef so parent components can attach a ref (e.g. for focus management)
 const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
   ({ className, type, ...props }, ref) => {
     return (

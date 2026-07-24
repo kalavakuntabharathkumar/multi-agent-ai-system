@@ -1,3 +1,7 @@
+// esbuild build script for the Node.js API server.
+// Bundles src/index.ts into a single ESM output file in dist/, externalizing
+// native modules and packages that cannot be bundled (e.g. native addons, ORMs).
+
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,19 +12,19 @@ import { rm } from "node:fs/promises";
 // Plugins (e.g. 'esbuild-plugin-pino') may use `require` to resolve dependencies
 globalThis.require = createRequire(import.meta.url);
 
-const artifactDir = path.dirname(fileURLToPath(import.meta.url));
+const artifactDir = path.dirname(fileURLToPath(import.meta.url));  // absolute path to this directory
 
 async function buildAll() {
   const distDir = path.resolve(artifactDir, "dist");
-  await rm(distDir, { recursive: true, force: true });
+  await rm(distDir, { recursive: true, force: true });  // clean the output directory before building
 
   await esbuild({
     entryPoints: [path.resolve(artifactDir, "src/index.ts")],
     platform: "node",
-    bundle: true,
-    format: "esm",
+    bundle: true,          // inline all imported modules into one file
+    format: "esm",         // output ES module syntax
     outdir: distDir,
-    outExtension: { ".js": ".mjs" },
+    outExtension: { ".js": ".mjs" },  // rename output to .mjs to signal ES module
     logLevel: "info",
     // Some packages may not be bundleable, so we externalize them, we can add more here as needed.
     // Some of the packages below may not be imported or installed, but we're adding them in case they are in the future.
@@ -28,7 +32,7 @@ async function buildAll() {
     // - uses native modules and loads them dynamically (e.g. sharp)
     // - use path traversal to read files (e.g. @google-cloud/secret-manager loads sibling .proto files)
     external: [
-      "*.node",
+      "*.node",           // native Node.js addons cannot be bundled
       "sharp",
       "better-sqlite3",
       "sqlite3",
@@ -101,7 +105,7 @@ async function buildAll() {
       "puppeteer-core",
       "electron",
     ],
-    sourcemap: "linked",
+    sourcemap: "linked",  // generate separate .map files linked from the output
     plugins: [
       // pino relies on workers to handle logging, instead of externalizing it we use a plugin to handle it
       esbuildPluginPino({ transports: ["pino-pretty"] })
@@ -122,5 +126,5 @@ globalThis.__dirname = __bannerPath.dirname(globalThis.__filename);
 
 buildAll().catch((err) => {
   console.error(err);
-  process.exit(1);
+  process.exit(1);  // non-zero exit so CI/build systems detect the failure
 });
